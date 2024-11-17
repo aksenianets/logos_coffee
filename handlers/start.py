@@ -22,7 +22,7 @@ async def start(update, context):
             add_user(update.message.from_user.id, linked_by[1])
             logger.info(
                 logger.info(
-                    "new user %s linked by %s",
+                    "New user %s linked by %s",
                     update.message.from_user.username,
                     linked_by[1],
                 )
@@ -30,7 +30,7 @@ async def start(update, context):
         else:
             await update.message.reply_text(text, disable_web_page_preview=True)
             add_user(update.message.from_user.id)
-            logger.info("new user - %s", update.message.from_user.username)
+            logger.info("New user - %s", update.message.from_user.username)
     else:
         text = ("Подписывайся на наши соц.сети:\n"
             + "https://t.me/logos_coffee \n"
