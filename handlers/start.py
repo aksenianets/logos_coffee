@@ -1,30 +1,41 @@
 from handlers.log import *
-
-# from handlers.funcs import *
+from handlers.funcs import *
 
 
 async def start(update, context):
-    text = (
-        "Привет, здесь ты можешь заказать себе кофе или другую вкусняшку!\n"
-        + "Подписывайся на нас в соц.сетях:\n"
-        + "https://t.me/logos_coffee \n"
-        + "https://www.instagram.com/logos_coffee_?igsh=YXp0b2YzMHFlamMy&utm_source=qr \n"
-        + "Чтобы сделать заказ, напиши /order"
-    )
-
-    # добавление в БД юзера
-    linked_by = update.message.text.split()
-    await update.message.reply_text(text)
-    if len(linked_by) == 2 and linked_by[1].isalpha():
-        await update.message.reply_text(
-            "Реферальная ссылка принята!\nПосле первой покупки ты получишь 3 балла"
+    check = check_user(update.message.from_user.id)
+    if not check:
+        text = (
+            "Привет, здесь ты можешь заказать себе кофе или другую вкусняшку!\n"
+            + "Подписывайся на наши соц.сети:\n"
+            + "https://t.me/logos_coffee \n"
+            + "https://clck.ru/3EfFdn \n"
+            # + "https://www.instagram.com/logos_coffee_?igsh=YXp0b2YzMHFlamMy&utm_source=qr \n"
+            + "Чтобы сделать заказ, напиши /order"
         )
-        logger.info(
-            logger.info(
-                "new user %s linked by %s",
-                update.message.from_user.username,
-                linked_by[1],
+        linked_by = update.message.text.split()
+        
+        if len(linked_by) == 2 and linked_by[1].isalpha():
+            await update.message.reply_text(
+                "Реферальная ссылка принята!\nПосле первой покупки ты получишь 3 балла"
             )
-        )
+            add_user(update.message.from_user.id, linked_by[1])
+            logger.info(
+                logger.info(
+                    "new user %s linked by %s",
+                    update.message.from_user.username,
+                    linked_by[1],
+                )
+            )
+        else:
+            await update.message.reply_text(text, disable_web_page_preview=True)
+            add_user(update.message.from_user.id)
+            logger.info("new user - %s", update.message.from_user.username)
     else:
-        logger.info("new user - %s", update.message.from_user.username)
+        text = ("Подписывайся на наши соц.сети:\n"
+            + "https://t.me/logos_coffee \n"
+            + "https://clck.ru/3EfFdn \n"
+            # + "https://www.instagram.com/logos_coffee_?igsh=YXp0b2YzMHFlamMy&utm_source=qr \n"
+            + "Чтобы сделать заказ, напиши /order"
+        )
+        await update.message.reply_text(text, disable_web_page_preview=True)
