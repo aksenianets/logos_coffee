@@ -36,14 +36,34 @@ def delete_employee_DB(username:str) -> bool:
     except:
         return False
 
+def check_employee(username: str) -> bool:
+    get_query = "SELECT username FROM staff"
+
+    res = sqlite3.connect(PATHTODB).execute(get_query)
+    res = [x[0] for x in res if None not in x]
+
+    return username in res
+
+
 def change_employee_status(username: str) -> None:
     change_query = f"""
-        UPDATE staff SET working = 1
+        UPDATE staff SET is_working = 1 - is_working 
         WHERE username = "{username}"
     """
 
     with sqlite3.connect(PATHTODB) as con:
         con.executescript(change_query)
+
+def check_employee_status(username: str) -> bool:
+    check_query = f"""
+        SELECT is_working FROM staff
+        WHERE username = "{username}"
+    """
+
+    with sqlite3.connect(PATHTODB) as con:
+        res = con.execute(check_query).fetchone()[0]
+        
+    return res
 
 # users funcs
 def add_user(user_id:int, linked_by:str="") -> None:

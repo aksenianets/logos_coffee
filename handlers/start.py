@@ -1,6 +1,7 @@
 from handlers.log import *
 from handlers.funcs import *
 
+from telegram.ext import ConversationHandler
 
 async def start(update, context):
     check = check_user(update.message.from_user.id)
@@ -39,3 +40,7 @@ async def start(update, context):
             + "Чтобы сделать заказ, напиши /order"
         )
         await update.message.reply_text(text, disable_web_page_preview=True)
+
+async def cancel(update, context):
+    await update.message.reply_text("Отменено")
+    return ConversationHandler.END
