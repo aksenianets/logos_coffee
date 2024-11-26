@@ -35,12 +35,13 @@ async def start(update, context):
     else:
         text = ("Подписывайся на наши соц.сети:\n"
             + "https://t.me/logos_coffee \n"
-            + "https://clck.ru/3EfFdn \n"
-            # + "https://www.instagram.com/logos_coffee_?igsh=YXp0b2YzMHFlamMy&utm_source=qr \n"
+            + "https://www.instagram.com/logos_coffee \n"
             + "Чтобы сделать заказ, напиши /order"
         )
         await update.message.reply_text(text, disable_web_page_preview=True)
 
 async def cancel(update, context):
-    await update.message.reply_text("Отменено")
+    await update.message.reply_text("Действие отменено")
+
+    logger.info("User %s canceled the conversation.", update.message.from_user.username)
     return ConversationHandler.END
