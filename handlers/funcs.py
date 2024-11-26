@@ -63,8 +63,20 @@ def check_employee_status(username: str) -> bool:
     return res
 
 # menu funcs
+def get_menu() -> list:
+    get_query = f"""
+        SELECT type, name, option, price, avaible
+        FROM menu WHERE deleted = 0
+    """
+
+    with sqlite3.connect(PATHTODB) as con:
+        res = sqlite3.connect(PATHTODB).execute(get_query)
+        res = [x for x in res]
+    
+    return res
+
 def get_types() -> list:
-    get_query = "SELECT type FROM menu WHERE deleted = 0"
+    get_query = "SELECT type FROM menu WHERE deleted = 0 AND avaible = 1"
     res = sqlite3.connect(PATHTODB).execute(get_query)
     res = [x[0] for x in res if None not in x]
 

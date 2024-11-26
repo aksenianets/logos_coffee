@@ -6,3 +6,4 @@ from handlers.employee import *
 from handlers.feedback import *
 from handlers.product_actions import *
 from handlers.log import *
+from handlers.menu import *

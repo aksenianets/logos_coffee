@@ -25,7 +25,7 @@ async def delete_employee(update, context):
                 await update.message.reply_text("Бариста успешно удалён")
                 logger.info(f"Barista {text[1]} successfully deleted")
             else:
-                await update.message.reply_text("Барисста уже удалён или произошла ошибка")
+                await update.message.reply_text("Бариста уже удалён или произошла ошибка")
         else:
             await update.message.reply_text("После команды введите имя пользователя через пробел\nПример: /delete_employee @employee1")
     else:

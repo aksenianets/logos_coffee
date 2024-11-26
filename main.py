@@ -18,6 +18,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("order", order))
     application.add_handler(CommandHandler("invite", invite))
+    application.add_handler(CommandHandler("menu", menu))
     
     feedback_handler = ConversationHandler(
         entry_points=[CommandHandler("feedback", feedback), ],
