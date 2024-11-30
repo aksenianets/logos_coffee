@@ -1,15 +1,25 @@
 import sqlite3
 import random
 import datetime
+import random
+import string
 
 PATHTODB = "handlers/logos.db"
 
+# non db funcs
+
+def  regenerate_password():
+    characters = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(random.sample(characters, 16))
+    open("handlers/password.txt", "w").write(password)
+    return password
+
 # admin funcs
-def add_employee_DB(username:str) -> bool:
+def add_barista_DB(id:int, username:str) -> bool:
     try:
         add_query = f"""
-                INSERT INTO staff (username, is_working)
-                VALUES ("{username}", 0)
+                INSERT INTO staff (id, username, is_working)
+                VALUES ("{id}", "{username}", 0)
             """
 
         with sqlite3.connect(PATHTODB) as con:
@@ -19,11 +29,11 @@ def add_employee_DB(username:str) -> bool:
     except:
         return False
 
-def delete_employee_DB(username:str) -> bool:
+def delete_barista_DB(username:str) -> bool:
     try:
         delete_query = f"""
             UPDATE staff SET fired = 1 
-            WHERE username = "{username}
+            WHERE username = "{username}"2
         """
 
         with sqlite3.connect(PATHTODB) as con:
@@ -33,15 +43,15 @@ def delete_employee_DB(username:str) -> bool:
     except:
         return False
 
-def check_employee(username: str) -> bool:
+def check_barista(username: str) -> bool:
     get_query = "SELECT username FROM staff WHERE fired = 0"
 
     res = sqlite3.connect(PATHTODB).execute(get_query)
-    res = [x[0] for x in res if None not in x]
+    res = [x[0] for x in res if x != None]
 
     return username in res
 
-def change_employee_status(username: str) -> None:
+def change_barista_status(username: str) -> None:
     change_query = f"""
         UPDATE staff SET is_working = 1 - is_working 
         WHERE username = "{username}"
@@ -50,16 +60,36 @@ def change_employee_status(username: str) -> None:
     with sqlite3.connect(PATHTODB) as con:
         con.executescript(change_query)
 
-def check_employee_status(username: str) -> bool:
+def check_barista_status(username: str) -> bool:
     check_query = f"""
         SELECT is_working FROM staff
         WHERE fired = 0 AND
-        username = "{username} "
+        username = "{username}"
     """
 
     with sqlite3.connect(PATHTODB) as con:
-        res = con.execute(check_query).fetchone()[0]
+        res = con.execute(check_query).fetchone()
+        if res:
+            res = [x for x in res][0]
+        else:
+            res = 0
         
+    return res
+
+def get_baristas() -> list:
+    get_query = """
+        SELECT username FROM staff
+        WHERE fired = 0 AND
+        is_working = 1
+    """
+
+    with sqlite3.connect(PATHTODB) as con:
+        res = con.execute(get_query)
+        if res:
+            res = [x[0] for x in res if None not in x]
+        else:
+            res = []
+
     return res
 
 # menu funcs
@@ -76,11 +106,15 @@ def get_menu() -> list:
     return res
 
 def get_types() -> list:
-    get_query = "SELECT type FROM menu WHERE deleted = 0 AND avaible = 1"
+    get_query = """
+        SELECT DISTINCT type FROM menu
+        WHERE deleted = 0 AND avaible = 1
+        ORDER BY -type
+    """
     res = sqlite3.connect(PATHTODB).execute(get_query)
     res = [x[0] for x in res if None not in x]
 
-    return [x for x in set(res)]
+    return [x for x in res]
 
 def check_product(name: str, option: str) -> list[str]:
     get_query = f"""
@@ -159,14 +193,17 @@ def change_availability_DB(name: str, option: str) -> None:
 
 # users funcs
 def add_user(user_id:int, linked_by:str="") -> None:
-    add_query = f"""
-            INSERT INTO users (user_id, points, linked_by)
-            VALUES ({user_id}, 0, "{linked_by}")
-        """
+    try:
+        add_query = f"""
+                INSERT INTO users (user_id, points, linked_by)
+                VALUES ({user_id}, 0, "{linked_by}")
+            """
 
-    with sqlite3.connect(PATHTODB) as con:
-        con.executescript(add_query)
-
+        with sqlite3.connect(PATHTODB) as con:
+            con.executescript(add_query)
+    except:
+        pass
+    
 def check_user(user_id: int) -> bool:
     get_query = """SELECT user_id FROM users"""
 

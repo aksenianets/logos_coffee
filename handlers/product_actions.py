@@ -11,7 +11,7 @@ AVAILABILITY_PRODUCT_NAME, AVAILABILITY_PRODUCT_OPTIONS = range(6, 8)
 
 # product adding
 async def add_product(update, context):
-    check = check_employee(update.message.from_user.username)
+    check = check_employee('@' + update.message.from_user.username)
     if update.message.from_user.id in ADMIN_IDS or check:
         reply_list = []
         for product_type in get_types():
@@ -106,7 +106,7 @@ async def product_price(update, context):
 
 # product deleting
 async def delete_product(update, context):
-    check = check_employee(update.message.from_user.username)
+    check = check_employee('@' + update.message.from_user.username)
     if update.message.from_user.id in ADMIN_IDS or check:
         await update.message.reply_text("Введите название товара, который хотите удалить")
 
@@ -129,11 +129,10 @@ async def delete_product_options(update, context):
     product_options = update.message.text.split(', ')
 
     for option in product_options:
-        option = option.lower()
         check = check_product(product_name, option)
 
         if check == []:
-            if option == "нет":
+            if option.lower() == "нет":
                 await update.message.reply_text(f"Товара {product_name} не существует")
             else:
                 await update.message.reply_text(f"Товара {product_name} {option} не существует")
@@ -141,14 +140,14 @@ async def delete_product_options(update, context):
             logger.info("Product %s not found", product_name)
         elif check[1] == 0:
             delete_product_DB(product_name, [option])
-            if option == "нет":
+            if option.lower() == "нет":
                 await update.message.reply_text(f"Товар {product_name} успешно удалён")
             else:
                 await update.message.reply_text(f"Товар {product_name} {option} успешно удалён")
 
             logger.info("User %s successfully deleted product: %s %s", update.message.from_user.username, product_name, option)
         else:
-            if option == "нет":
+            if option.lower() == "нет":
                 await update.message.reply_text(f"Товар {product_name} уже удалён")
             else:
                 await update.message.reply_text(f"Товар {product_name} {option} уже удалён")
@@ -160,7 +159,7 @@ async def delete_product_options(update, context):
 
 # product changing availability
 async def change_product_availability(update, context):
-    check = check_employee(update.message.from_user.username)
+    check = check_employee('@' + update.message.from_user.username)
     if update.message.from_user.id in ADMIN_IDS or check:
         await update.message.reply_text("Введите название товара, который хотите изменить")
 

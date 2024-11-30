@@ -21,13 +21,7 @@ async def start(update, context):
                 "Реферальная ссылка принята!\nПосле первой покупки ты получишь 3 балла"
             )
             add_user(update.message.from_user.id, linked_by[1])
-            logger.info(
-                logger.info(
-                    "New user %s linked by %s",
-                    update.message.from_user.username,
-                    linked_by[1],
-                )
-            )
+            logger.info("New user %s linked by %s", update.message.from_user.username, linked_by[1])
         else:
             await update.message.reply_text(text, disable_web_page_preview=True)
             add_user(update.message.from_user.id)
