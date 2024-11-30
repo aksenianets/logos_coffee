@@ -13,7 +13,9 @@ from telegram.ext import (
 from warnings import filterwarnings
 from telegram.warnings import PTBUserWarning
 
-filterwarnings(action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning)
+filterwarnings(
+    action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
+)
 
 if __name__ == "__main__":
     application = ApplicationBuilder().token(config.TOKEN).build()
@@ -22,11 +24,15 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("invite", invite))
     application.add_handler(CommandHandler("menu", menu))
-    
+
     feedback_handler = ConversationHandler(
-        entry_points=[CommandHandler("feedback", feedback), ],
+        entry_points=[
+            CommandHandler("feedback", feedback),
+        ],
         states={
-            FORWARD_FEEDBACK: [MessageHandler(filters.TEXT & ~filters.COMMAND, forward_feedback)],
+            FORWARD_FEEDBACK: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, forward_feedback)
+            ],
         },
         fallbacks=[MessageHandler(filters.COMMAND, cancel)],
     )
@@ -55,17 +61,26 @@ if __name__ == "__main__":
     # admin commands
     application.add_handler(CommandHandler("delete_barista", delete_barista))
 
-    # employee commands
+    # barista commands
     application.add_handler(CommandHandler("change_status", change_status))
     application.add_handler(CommandHandler("become_barista", become_barista))
 
     add_product_handler = ConversationHandler(
         entry_points=[CommandHandler("add_product", add_product)],
         states={
-            PRODUCT_TYPE: [CallbackQueryHandler(product_type_button), MessageHandler(filters.TEXT & ~filters.COMMAND, product_type)],
-            PRODUCT_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, product_name)],
-            PRODUCT_OPTIONS: [MessageHandler(filters.TEXT & ~filters.COMMAND, product_options)],
-            PRODUCT_PRICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, product_price)],
+            PRODUCT_TYPE: [
+                CallbackQueryHandler(product_type_button),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, product_type),
+            ],
+            PRODUCT_NAME: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, product_name)
+            ],
+            PRODUCT_OPTIONS: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, product_options)
+            ],
+            PRODUCT_PRICE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, product_price)
+            ],
         },
         fallbacks=[MessageHandler(filters.COMMAND, cancel)],
     )
@@ -74,18 +89,32 @@ if __name__ == "__main__":
     delete_product_handler = ConversationHandler(
         entry_points=[CommandHandler("delete_product", delete_product)],
         states={
-            DELETE_PRODUCT_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, delete_product_name)],
-            DELETE_PRODUCT_OPTIONS: [MessageHandler(filters.TEXT & ~filters.COMMAND, delete_product_options)]
+            DELETE_PRODUCT_NAME: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, delete_product_name)
+            ],
+            DELETE_PRODUCT_OPTIONS: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, delete_product_options)
+            ],
         },
         fallbacks=[MessageHandler(filters.COMMAND, cancel)],
     )
     application.add_handler(delete_product_handler)
 
     change_availability_handler = ConversationHandler(
-        entry_points=[CommandHandler("change_availability", change_product_availability)],
+        entry_points=[
+            CommandHandler("change_availability", change_product_availability)
+        ],
         states={
-            AVAILABILITY_PRODUCT_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_product_availability_name)],
-            AVAILABILITY_PRODUCT_OPTIONS: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_product_availability_options)]
+            AVAILABILITY_PRODUCT_NAME: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, change_product_availability_name
+                )
+            ],
+            AVAILABILITY_PRODUCT_OPTIONS: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, change_product_availability_options
+                )
+            ],
         },
         fallbacks=[MessageHandler(filters.COMMAND, cancel)],
     )
