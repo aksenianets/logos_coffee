@@ -24,6 +24,9 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("invite", invite))
     application.add_handler(CommandHandler("menu", menu))
+    application.add_handler(CommandHandler("points", points))
+    application.add_handler(CommandHandler("get_id", get_id))
+    application.add_handler(CommandHandler("help", help))
 
     feedback_handler = ConversationHandler(
         entry_points=[
@@ -44,26 +47,21 @@ if __name__ == "__main__":
             ORDER_PRODUCT_NAME: [CallbackQueryHandler(order_product_name)],
             ORDER_PRODUCT_OPTION: [CallbackQueryHandler(order_product_option)],
             ORDER_PRODUCT: [CallbackQueryHandler(order_product)],
+            CART_CHANGE: [CallbackQueryHandler(cart_change)],
+            CART_DELETE: [CallbackQueryHandler(cart_delete)],
         },
         fallbacks=[MessageHandler(filters.COMMAND, cancel)],
     )
     application.add_handler(order_handler)
 
-    cart_handler = ConversationHandler(
-        entry_points=[CommandHandler("cart", cart)],
-        states={
-            CART_CHANGE: [CallbackQueryHandler(cart_change)],
-        },
-        fallbacks=[MessageHandler(filters.COMMAND, cancel)],
-    )
-    application.add_handler(cart_handler)
-
     # admin commands
     application.add_handler(CommandHandler("delete_barista", delete_barista))
+    application.add_handler(CommandHandler("add_barista", add_barista))
 
     # barista commands
     application.add_handler(CommandHandler("change_status", change_status))
-    application.add_handler(CommandHandler("become_barista", become_barista))
+    application.add_handler(CommandHandler("ready", ready))
+    application.add_handler(CommandHandler("done", done))
 
     add_product_handler = ConversationHandler(
         entry_points=[CommandHandler("add_product", add_product)],

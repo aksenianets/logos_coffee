@@ -1,9 +1,10 @@
-from handlers.log import *
-from handlers.funcs import *
+from log import *
+from database.funcs import *
+from config import *
 
 from telegram import Bot
 from telegram.ext import ConversationHandler
-from config import *
+from telegram import Bot
 
 FORWARD_FEEDBACK = range(1)
 

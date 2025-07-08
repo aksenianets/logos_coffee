@@ -1,6 +1,7 @@
 from config import *
-from handlers.log import *
-from handlers.funcs import *
+from log import *
+from database.funcs import *
+
 
 async def menu(update, context):
     check = check_barista(update.message.from_user.username)
@@ -29,7 +30,6 @@ async def menu(update, context):
                     stop += f"         {j[1]} \- {j[3]}р\.\n"
             if len(stop.split()) != 1:
                 text += stop
-            
+
     logger.info("User %s opened menu", update.message.from_user.username)
     await update.message.reply_markdown_v2(text)
-

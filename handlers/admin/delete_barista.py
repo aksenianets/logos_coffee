@@ -1,5 +1,5 @@
-from handlers.log import *
-from handlers.funcs import *
+from log import *
+from database.funcs import *
 from config import *
 
 
@@ -7,7 +7,6 @@ async def delete_barista(update, context):
     if update.message.from_user.id in ADMIN_IDS:
         text = update.message.text.split()
         if len(text) == 2:
-            print(text[1][1:])
             if delete_barista_DB(text[1][1:]):
                 await update.message.reply_text("Бариста успешно удалён")
                 logger.info(f"Barista {text[1]} successfully deleted")

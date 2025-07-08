@@ -1,20 +1,25 @@
-from handlers.log import *
-from handlers.funcs import *
+from log import *
+from database.funcs import *
+from config import *
 
 from telegram.ext import ConversationHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Bot
 
-import sqlite3
+(
+    ORDER_PRODUCT_TYPE,
+    ORDER_PRODUCT_NAME,
+    ORDER_PRODUCT_OPTION,
+    ORDER_PRODUCT,
+    CART_CHANGE,
+    CART_DELETE,
+) = range(6)
 
-PATHTODB = "handlers/logos.db"
-
-ORDER_PRODUCT_TYPE, ORDER_PRODUCT_NAME, ORDER_PRODUCT_OPTION, ORDER_PRODUCT = range(4)
 
 def menu_keyboard(from_to: list):
     start = from_to[1]
     end = min(start + from_to[2], len(from_to[0]))
     current_page_items = from_to[0][start:end]
-    
+
     navigation = []
     if from_to[1] > 0:
         navigation.append(InlineKeyboardButton("<", callback_data="prev_page"))
@@ -24,12 +29,12 @@ def menu_keyboard(from_to: list):
 
     return InlineKeyboardMarkup(current_page_items + [navigation])
 
-async def order_product_type(update, context):
-    logger.info("__Start order_product_type__")
 
+async def order_product_type(update, context):
     check = check_user(update.message.from_user.id)
-    curr_hour = datetime.datetime.now().time().hour
+    # curr_hour = datetime.datetime.now().time().hour
     types = get_types()
+    cart = [InlineKeyboardButton("Корзина", callback_data="cart")]
 
     if not check:
         await update.message.reply_text(
@@ -44,22 +49,21 @@ async def order_product_type(update, context):
         for product_type in types:
             btn = InlineKeyboardButton(product_type, callback_data=product_type)
             reply_list.append([btn])
+        reply_list.append(cart)
         types_page = InlineKeyboardMarkup(reply_list)
-        context.user_data["types_page"] = reply_list  # кнопки типов
+        context.user_data["types_page"] = reply_list
 
         await update.message.reply_text(
             "Выберите какого типа продукт Вы хотите заказать:", reply_markup=types_page
         )
+
         return ORDER_PRODUCT_NAME
 
 
 async def order_product_name(update, context):
     query = update.callback_query
     await query.answer()
-
-    menu_query = f"""SELECT name, price FROM menu WHERE type = '{query.data}' AND deleted = 0 ORDER BY name"""
-    with sqlite3.connect(PATHTODB) as con:
-        products = con.execute(menu_query).fetchall()
+    products = get_products(query.data)
 
     product_prices = {}
     for name, price in products:
@@ -78,8 +82,39 @@ async def order_product_name(update, context):
 
     context.user_data["lens"] = [reply_list, 0, 4]
 
-    await query.edit_message_text("Выберите товар:", reply_markup=menu_keyboard(context.user_data["lens"]))
-    return ORDER_PRODUCT_OPTION
+    if query.data == "cart":
+        if context.user_data.get("cart"):
+            text = "*Ваша корзина:*\n" + "\n"
+            total = 0
+            for x in context.user_data["cart"]:
+                x = x.split(", ")
+                total += int(x[2])
+                text += f"    {x[0]} {x[1]} \- {x[2]} руб\.\n"
+            text += f"\n*Итого: {str(total)} руб\.*"
+            cart_keyboard = InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("Заказать", callback_data="order")],
+                    [InlineKeyboardButton("Удалить товар", callback_data="delete")],
+                    [InlineKeyboardButton("Назад", callback_data="back")],
+                ]
+            )
+            await query.edit_message_text(
+                text, reply_markup=cart_keyboard, parse_mode="MarkdownV2"
+            )
+            return CART_CHANGE
+        else:
+            await query.edit_message_text(
+                "Ваша корзина пуста",
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("Назад", callback_data="back")]]
+                ),
+            )
+            return ORDER_PRODUCT_OPTION
+    else:
+        await query.edit_message_text(
+            "Выберите товар:", reply_markup=menu_keyboard(context.user_data["lens"])
+        )
+        return ORDER_PRODUCT_OPTION
 
 
 async def order_product_option(update, context):
@@ -98,8 +133,10 @@ async def order_product_option(update, context):
         if from_to[1] - from_to[2] >= 0:
             from_to[1] -= from_to[2]
         context.user_data["lens"] = from_to
-    
-        await query.edit_message_text("Выберите товар:", reply_markup=menu_keyboard(context.user_data["lens"]))
+
+        await query.edit_message_text(
+            "Выберите товар:", reply_markup=menu_keyboard(context.user_data["lens"])
+        )
 
         return ORDER_PRODUCT_OPTION
 
@@ -108,14 +145,14 @@ async def order_product_option(update, context):
         if from_to[1] + from_to[2] < len(from_to[0]):
             from_to[1] += from_to[2]
         context.user_data["lens"] = from_to
-    
-        await query.edit_message_text("Выберите товар:", reply_markup=menu_keyboard(context.user_data["lens"]))
+
+        await query.edit_message_text(
+            "Выберите товар:", reply_markup=menu_keyboard(context.user_data["lens"])
+        )
 
         return ORDER_PRODUCT_OPTION
 
-    options_query = f"""SELECT option, price FROM menu WHERE name = '{query.data}' AND deleted = 0 ORDER BY price"""
-    with sqlite3.connect(PATHTODB) as con:
-        options = con.execute(options_query).fetchall()
+    options = get_options(query.data)
 
     if options[0][0] != "нет":
         reply_list = []
@@ -132,27 +169,27 @@ async def order_product_option(update, context):
         )
         return ORDER_PRODUCT
     else:
-        btn = [InlineKeyboardButton("Заказать", callback_data="заказать")]
         await query.edit_message_text(
             f"Товар {query.data} добавлен в корзину\nХотите что-то ещё?",
-            reply_markup=InlineKeyboardMarkup(context.user_data["types_page"] + [btn]),
+            reply_markup=InlineKeyboardMarkup(context.user_data["types_page"]),
         )
         if context.user_data.get("cart"):
             context.user_data["cart"].append(query.data)
         else:
             context.user_data["cart"] = [query.data]
-        return ORDER_PRODUCT_TYPE
+        return
 
 
 async def order_product(update, context):
     query = update.callback_query
     await query.answer()
 
-    if query.data == "назад":
-        await query.edit_message_text("Выберите товар:", reply_markup=menu_keyboard(context.user_data["lens"]))
+    if query.data == "back":
+        await query.edit_message_text(
+            "Выберите товар:", reply_markup=menu_keyboard(context.user_data["lens"])
+        )
         return ORDER_PRODUCT_OPTION
 
-    btn = [InlineKeyboardButton("Заказать", callback_data="заказать")]
     if context.user_data.get("cart"):
         context.user_data["cart"].append(query.data)
     else:
@@ -161,7 +198,105 @@ async def order_product(update, context):
     name, option, price = query.data.split(", ")
     await query.edit_message_text(
         f"Товар {name} {option} добавлен в корзину\nХотите что-то ещё?",
-        reply_markup=InlineKeyboardMarkup(context.user_data["types_page"] + [btn]),
+        reply_markup=InlineKeyboardMarkup(context.user_data["types_page"]),
     )
 
     return ORDER_PRODUCT_NAME
+
+
+async def cart_change(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "back":
+        await query.edit_message_text(
+            "Выберите какого типа продукт Вы хотите заказать:",
+            reply_markup=InlineKeyboardMarkup(context.user_data["types_page"]),
+        )
+        return ORDER_PRODUCT_NAME
+
+    elif query.data == "order":
+        user_id = query.from_user.id
+        code = generate_code()
+        await query.edit_message_text(
+            f"Ваш номер заказа: {code}\nКогда он будет готов. вам придёт уведомление",
+        )
+
+        async with Bot(TOKEN) as bot:
+            for baristas in get_baristas():
+                text, total = "\n", 0
+                for x in context.user_data["cart"]:
+                    x = x.split(", ")
+                    total += int(x[2])
+                    text += f"    {x[0]} {x[1]} \- {x[2]} руб\.\n"
+                text += f"\n*Итого: {str(total)} руб\.*"
+
+                await bot.send_message(
+                    chat_id=baristas[1],
+                    text=f"*Новый заказ\! Номер\: {code}*\n" + text,
+                    parse_mode="MarkdownV2",
+                )
+
+        cart_names = [x.split(", ")[0] for x in context.user_data["cart"]]
+        is_drink_in_cart = check_drink_in_cart(cart_names)
+        create_order(user_id, code, is_drink_in_cart)
+
+        return ConversationHandler.END
+
+    elif query.data == "delete":
+        btns, count = [], 0
+        for x in context.user_data["cart"]:
+            x = x.split(", ")
+            btns.append([InlineKeyboardButton(f"{x[0]} {x[1]}", callback_data=count)])
+            count += 1
+        btns.append([InlineKeyboardButton("Назад", callback_data="back")])
+        delete_keyboard = InlineKeyboardMarkup(btns)
+        await query.edit_message_text(
+            "Выберете товар, который вы хотите удалить:", reply_markup=delete_keyboard
+        )
+
+        return CART_DELETE
+
+
+async def cart_delete(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "back":
+        await query.edit_message_text(
+            "Выберите какого типа продукт, Вы хотите заказать:",
+            reply_markup=InlineKeyboardMarkup(context.user_data["types_page"]),
+        )
+
+        return ORDER_PRODUCT_NAME
+    else:
+        del context.user_data["cart"][int(query.data)]
+        if context.user_data.get("cart"):
+            text = "*Ваша корзина:*\n" + "\n"
+            total = 0
+            for x in context.user_data["cart"]:
+                x = x.split(", ")
+                total += int(x[2])
+                text += f"    {x[0]} {x[1]} \- {x[2]} руб\.\n"
+            text += f"\n*Итого: {str(total)} руб\.*"
+            cart_keyboard = InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("Заказать", callback_data="order")],
+                    [InlineKeyboardButton("Удалить товар", callback_data="delete")],
+                    [InlineKeyboardButton("Назад", callback_data="back")],
+                ]
+            )
+            await query.edit_message_text(
+                text, reply_markup=cart_keyboard, parse_mode="MarkdownV2"
+            )
+
+            return CART_CHANGE
+        else:
+            await query.edit_message_text(
+                "Ваша корзина пуста",
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("Назад", callback_data="back")]]
+                ),
+            )
+
+            return ORDER_PRODUCT_OPTION
